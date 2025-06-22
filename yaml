@@ -1,0 +1,16 @@
+
+---
+
+## 👉 Étapes suivantes (après GitHub)
+
+1. **Fork/clone** ce projet.
+2. Renomme `.env.example` → `.env`, remplis avec tes clés et URLs.
+3. Sur Railway, crée un projet « Deploy from GitHub » → choisis ce repo.
+4. Défini variables d’environnement depuis ton `.env`.
+5. Déploie → le bot s’initialise.
+6. Configure côté Google le Web App à recevoir les pushs.
+7. Invoque le `createWeeklySheet()` chaque lundi matin via le trigger Apps Script automatique.
+
+---
+
+Tu veux que je te prépare **le script Apps Script** Web App et la fonction `createWeeklySheet()` tout de suite ?
