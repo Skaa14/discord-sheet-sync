@@ -4,7 +4,7 @@ process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection:", reason);
 });
 
-const express = require('express');
+import express from 'express';
 const app = express();
 
 // Quand quelqu’un accède à la racine du site ("/"), on répond juste "Bot is running."
