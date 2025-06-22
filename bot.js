@@ -1,3 +1,5 @@
+console.log("Bot en cours de démarrage...");
+
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
