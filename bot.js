@@ -94,6 +94,10 @@ client.on("messageCreate", msg => {
 
 client.login(process.env.BOT_TOKEN);
 
+client.on("ready", () => {
+  console.log(`Connecté en tant que ${client.user.tag}`);
+});
+
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
 });
