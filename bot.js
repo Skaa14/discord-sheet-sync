@@ -1,5 +1,9 @@
 console.log("Bot en cours de démarrage...");
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection:", reason);
+});
+
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
@@ -89,3 +93,7 @@ client.on("messageCreate", msg => {
 });
 
 client.login(process.env.BOT_TOKEN);
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
