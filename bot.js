@@ -4,6 +4,19 @@ process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection:", reason);
 });
 
+const express = require('express');
+const app = express();
+
+// Quand quelqu’un accède à la racine du site ("/"), on répond juste "Bot is running."
+app.get('/', (req, res) => {
+  res.send('Bot is running.');
+});
+
+// Démarre le serveur sur le port défini par Railway (ou le 3000 par défaut)
+app.listen(process.env.PORT || 3000, () => {
+  console.log('🌐 Serveur HTTP Express lancé pour le keep-alive');
+});
+
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
