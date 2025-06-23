@@ -138,30 +138,31 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
   const userId = newM.user.id;
 
   for (const [grade, id] of Object.entries(ROLE_IDS)) {
-    const had = oldM.roles.cache.has(id);
-    const has = newM.roles.cache.has(id);
-    if (!had && has) {
-      postToSheet({
-        type: "grade",
-        userId,
-        matricule,
-        nom,
-        grade
-      });
-    }
+  const had = oldM.roles.cache.has(id);
+  const has = newM.roles.cache.has(id);
+  if (!had && has) {
+    postToSheet({
+      type: "grade",
+      matricule: mat,
+      grade,
+      userId: newM.id,
+      nom: newM.nickname || newM.user.username
+    });
   }
+}
 
   for (const [formation, id] of Object.entries(FORMATION_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
     if (!had && has) {
       postToSheet({
-        type: "formation",
-        userId,
-        matricule,
-        nom,
-        formation
-      });
+  type: "formation",
+  matricule: mat,
+  formation: name,
+  userId: newM.id,
+  nom: newM.nickname || newM.user.username
+});
+
     }
   }
 });
