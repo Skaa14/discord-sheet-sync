@@ -22,6 +22,28 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Sync avec Sheet
+async function syncToGoogleSheet(userId) {
+  const response = await fetch('https://script.google.com/macros/s/XXXXXXXXXXXX/exec', {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+client.on('messageCreate', async (message) => {
+  if (message.content === '!valider') {
+    await syncToGoogleSheet(message.author.id);
+    message.reply('Tu as été validé dans le Google Sheet !');
+  }
+});
+
+  if (response.ok) {
+    console.log('✅ Synchronisation réussie avec Google Sheet');
+  } else {
+    console.error('❌ Échec de la synchronisation');
+  }
+}
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
