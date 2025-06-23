@@ -67,7 +67,7 @@ async function postToSheet(payload) {
 }
 
 async function syncToGoogleSheet(userId) {
-  const response = await fetch('https://script.google.com/macros/s/AKfycbwicXBuuIJ9R_QC2ebiMvlCJ6yntjnm5jrQ3GLwJMbzIMHwg_qoyOTeyu5Ivl3qnw3G/exec', {
+  const response = await fetch('https://script.google.com/macros/library/d/1jaFSS9Em43yZ_fIMlCzF3CDtFY41JDaOu3Z3L1Zg7iJM9NJB06zJ9k4M/1', {
     method: 'POST',
     body: JSON.stringify({ userId }),
     headers: { 'Content-Type': 'application/json' }
