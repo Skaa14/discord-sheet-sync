@@ -66,13 +66,6 @@ async function postToSheet(payload) {
   }
 }
 
-async function syncToGoogleSheet(userId) {
-  const response = await fetch('https://script.google.com/macros/s/AKfycbwicXBuuIJ9R_QC2ebiMvlCJ6yntjnm5jrQ3GLwJMbzIMHwg_qoyOTeyu5Ivl3qnw3G/exec', {
-    method: 'POST',
-    body: JSON.stringify({ userId }),
-    headers: { 'Content-Type': 'application/json' }
-  });
-
   const resultText = await response.text();
 
   if (response.ok && resultText.trim() === 'OK') {
@@ -93,9 +86,16 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   if (message.content === "!valider") {
-    await syncToGoogleSheet(message.author.id);
-    message.reply('Tu as été validé dans le Google Sheet !');
-  }
+  const userId = message.author.id;
+  const nickname = message.member.nickname || message.author.username;
+  const mat = extractMatricule(nickname);
+  const nom = nickname.replace(/\[\d+\]\s*/, '').trim();
+
+  if (!mat) return message.reply("❌ Matricule introuvable dans ton pseudo.");
+
+  postToSheet({ type: "grade", userId, matricule: mat, nom, grade: "Rookie" });
+  message.reply('✅ Tu as été enregistré comme Rookie dans Google Sheets !');
+}
 
   if (message.content === "!presence") {
     const userId = message.author.id;
@@ -132,25 +132,45 @@ client.on("messageCreate", async (message) => {
 });
 
 client.on("guildMemberUpdate", async (oldM, newM) => {
-  const mat = extractMatricule(newM.nickname || newM.user.username);
+  const user = newM.user;
+  const userId = user.id;
+  const nickname = newM.nickname || user.username;
+  const mat = extractMatricule(nickname);
+  const nom = nickname.replace(/\[\d+\]\s*/, '').trim();
+
   if (!mat) return;
 
+  // Détection des grades
   for (const [grade, id] of Object.entries(ROLE_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
     if (!had && has) {
-      postToSheet({ type: "grade", matricule: mat, grade });
+      postToSheet({
+        type: "grade",
+        userId,
+        matricule: mat,
+        nom,
+        grade
+      });
     }
   }
 
-  for (const [name, id] of Object.entries(FORMATION_IDS)) {
+  // Détection des formations
+  for (const [formation, id] of Object.entries(FORMATION_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
     if (!had && has) {
-      postToSheet({ type: "formation", matricule: mat, formation: name });
+      postToSheet({
+        type: "formation",
+        userId,
+        matricule: mat,
+        nom,
+        formation
+      });
     }
   }
 });
+
 
 client.login(process.env.BOT_TOKEN);
 
