@@ -103,7 +103,10 @@ client.on("messageCreate", async (message) => {
         body: JSON.stringify({ userId }),
       });
 
-      if (response.ok) {
+    const text = await response.text(); // 👈 Ajout
+    console.log('Réponse Sheets:', text); // 👈 Ajout
+
+    if (response.ok) {
         message.reply('📋 Ta présence a bien été enregistrée dans la feuille !');
       } else {
         message.reply('❌ Une erreur est survenue côté Google Sheet.');
