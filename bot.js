@@ -44,6 +44,35 @@ client.on('messageCreate', async (message) => {
   }
 }
 
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content === '!presence') {
+    // Récupère l'ID Discord de l'utilisateur
+    const userId = message.author.id;
+
+    // URL de ton Apps Script déployé
+    const url = 'https://script.google.com/macros/s/TON_DEPLOIEMENT/exec';
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (response.ok) {
+        message.reply('📋 Ta présence a bien été enregistrée dans la feuille !');
+      } else {
+        message.reply('❌ Une erreur est survenue côté Google Sheet.');
+      }
+    } catch (error) {
+      console.error('Erreur fetch :', error);
+      message.reply('⚠️ Impossible de contacter Google Sheet.');
+    }
+  }
+});
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
