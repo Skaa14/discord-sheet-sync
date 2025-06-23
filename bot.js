@@ -81,16 +81,20 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   if (message.content === "!valider") {
-    const userId = message.author.id;
-    const nick = message.member.nickname || message.author.username;
-    const info = extractMatricule(nick);
+  const userId = message.author.id;
+  const nom = message.member?.nickname || message.author.username;
+  const mat = extractMatricule(nom);
 
-    if (!info) return message.reply("❌ Impossible de lire ton matricule.");
+  postToSheet({
+    type: "grade",
+    userId,
+    matricule: mat,
+    grade: "Rookie",
+    nom
+  });
 
-    const { matricule, nom } = info;
-    postToSheet({ type: "grade", userId, matricule, nom, grade: "Rookie" });
-    message.reply('✅ Tu as été enregistré comme Rookie dans Google Sheets !');
-  }
+  message.reply('Tu as été validé dans le Google Sheet !');
+}
 
   if (message.content === "!presence") {
     const userId = message.author.id;
