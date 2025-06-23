@@ -84,25 +84,32 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   if (message.content === "!valider") {
-    const userId = message.author.id;
-    const nick = message.member?.nickname || message.author.username;
-    const info = extractMatricule(nick);
-    if (!info) return message.reply("❌ Format de nom invalide");
+  const userId = message.author.id;
+  const nom = message.member?.nickname || message.author.username;
+  const info = extractMatricule(nom);
 
-    const { matricule, nom } = info;
-    
-console.log("🔁 Envoi payload:", payload);
-
-    postToSheet({
-      type: "grade",
-      userId,
-      matricule,
-      grade: "Rookie",
-      nom
-    });
-
-    message.reply('✅ Tu as été validé dans le Google Sheet !');
+  if (!info) {
+    message.reply("❌ Impossible d'extraire le matricule. Format attendu : `38 | Prénom Nom`");
+    return;
   }
+
+  const { matricule, nom: nomComplet } = info;
+
+  const payload = {
+    type: "grade",
+    userId,
+    matricule,
+    grade: "Rookie",
+    nom: nomComplet
+  };
+
+  console.log("🔁 Envoi payload:", payload);
+
+  postToSheet(payload);
+
+  message.reply('✅ Tu as été validé dans le Google Sheet !');
+}
+
 
   if (message.content === "!presence") {
     const userId = message.author.id;
