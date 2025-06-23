@@ -24,7 +24,7 @@ dotenv.config();
 
 // Sync avec Sheet
 async function syncToGoogleSheet(userId) {
-  const response = await fetch('https://script.google.com/macros/s/XXXXXXXXXXXX/exec', {
+  const response = await fetch('https://script.google.com/macros/s/AKfycbwicXBuuIJ9R_QC2ebiMvlCJ6yntjnm5jrQ3GLwJMbzIMHwg_qoyOTeyu5Ivl3qnw3G/exec', {
     method: 'POST',
     body: JSON.stringify({ userId }),
     headers: { 'Content-Type': 'application/json' }
@@ -52,7 +52,7 @@ client.on('messageCreate', async (message) => {
     const userId = message.author.id;
 
     // URL de ton Apps Script déployé
-    const url = 'https://script.google.com/macros/s/TON_DEPLOIEMENT/exec';
+    const url = 'https://script.google.com/macros/s/AKfycbwicXBuuIJ9R_QC2ebiMvlCJ6yntjnm5jrQ3GLwJMbzIMHwg_qoyOTeyu5Ivl3qnw3G/exec';
 
     try {
       const response = await fetch(url, {
