@@ -50,8 +50,14 @@ const SHEET_URL = process.env.SHEET_WEBAPP_URL;
 
 // --- Fonctions utilitaires ---
 function extractMatricule(nick) {
-  const m = nick.match(/\[(\d+)\]/);
-  return m ? m[1] : null;
+  const match = nick.match(/^(\d+)\s*\|\s*(.+)$/);
+  if (match) {
+    return {
+      matricule: match[1],
+      nom: match[2].trim()
+    };
+  }
+  return null;
 }
 
 async function postToSheet(payload) {
@@ -76,13 +82,13 @@ client.on("messageCreate", async (message) => {
 
   if (message.content === "!valider") {
     const userId = message.author.id;
-    const nickname = message.member.nickname || message.author.username;
-    const mat = extractMatricule(nickname);
-    const nom = nickname.replace(/\[\d+\]\s*/, '').trim();
+    const nick = message.member.nickname || message.author.username;
+    const info = extractMatricule(nick);
 
-    if (!mat) return message.reply("❌ Matricule introuvable dans ton pseudo.");
+    if (!info) return message.reply("❌ Impossible de lire ton matricule.");
 
-    postToSheet({ type: "grade", userId, matricule: mat, nom, grade: "Rookie" });
+    const { matricule, nom } = info;
+    postToSheet({ type: "grade", userId, matricule, nom, grade: "Rookie" });
     message.reply('✅ Tu as été enregistré comme Rookie dans Google Sheets !');
   }
 
@@ -112,22 +118,24 @@ client.on("messageCreate", async (message) => {
 
   // Absences / sanctions
   if (message.channel.id === CHANNEL_ABS || message.channel.id === CHANNEL_SAN) {
-    const mat = extractMatricule(message.content);
-    if (!mat) return;
+    const nick = message.member?.nickname || message.author.username;
+    const info = extractMatricule(nick);
+    if (!info) return;
+    const { matricule, nom } = info;
+
     const type = message.channel.id === CHANNEL_ABS ? "absence" : "sanction";
-    const reason = message.content.replace(/\[.*?\]\s*/, "");
-    postToSheet({ type, matricule: mat, reason, timestamp: message.createdTimestamp });
+    const reason = message.content.replace(/^\d+\s*\|\s*/, "").trim();
+    postToSheet({ type, matricule, nom, reason, timestamp: message.createdTimestamp });
   }
 });
 
 client.on("guildMemberUpdate", async (oldM, newM) => {
-  const user = newM.user;
-  const userId = user.id;
-  const nickname = newM.nickname || user.username;
-  const mat = extractMatricule(nickname);
-  const nom = nickname.replace(/\[\d+\]\s*/, '').trim();
+  const nick = newM.nickname || newM.user.username;
+  const info = extractMatricule(nick);
+  if (!info) return;
 
-  if (!mat) return;
+  const { matricule, nom } = info;
+  const userId = newM.user.id;
 
   for (const [grade, id] of Object.entries(ROLE_IDS)) {
     const had = oldM.roles.cache.has(id);
@@ -136,7 +144,7 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
       postToSheet({
         type: "grade",
         userId,
-        matricule: mat,
+        matricule,
         nom,
         grade
       });
@@ -150,7 +158,7 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
       postToSheet({
         type: "formation",
         userId,
-        matricule: mat,
+        matricule,
         nom,
         formation
       });
