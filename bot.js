@@ -90,6 +90,8 @@ client.on("messageCreate", async (message) => {
     if (!info) return message.reply("❌ Format de nom invalide");
 
     const { matricule, nom } = info;
+    
+console.log("🔁 Envoi payload:", payload);
 
     postToSheet({
       type: "grade",
@@ -134,6 +136,7 @@ client.on("messageCreate", async (message) => {
 
     const type = message.channel.id === CHANNEL_ABS ? "absence" : "sanction";
     const reason = message.content.replace(/^\d+\s*\|\s*/, "").trim();
+    console.log("🔁 Envoi payload:", payload);
     postToSheet({ type, matricule, nom, reason, timestamp: message.createdTimestamp });
   }
 });
@@ -149,6 +152,7 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
   for (const [grade, id] of Object.entries(ROLE_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
+    console.log("🔁 Envoi payload:", payload);
     if (!had && has) {
       postToSheet({
         type: "grade",
@@ -163,6 +167,7 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
   for (const [formation, id] of Object.entries(FORMATION_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
+    console.log("🔁 Envoi payload:", payload);
     if (!had && has) {
       postToSheet({
         type: "formation",
