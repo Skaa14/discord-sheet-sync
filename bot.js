@@ -66,17 +66,6 @@ async function postToSheet(payload) {
   }
 }
 
-  const resultText = await response.text();
-
-  if (response.ok && resultText.trim() === 'OK') {
-    console.log('✅ Synchronisation réussie avec Google Sheet');
-  } else {
-    console.error('❌ Échec de la synchronisation');
-    console.error('Réponse Sheets:', resultText);
-  }
-}
-
-
 // --- Événements Discord ---
 client.on("ready", () => {
   console.log(`Connecté en tant que ${client.user.tag}`);
@@ -86,16 +75,16 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   if (message.content === "!valider") {
-  const userId = message.author.id;
-  const nickname = message.member.nickname || message.author.username;
-  const mat = extractMatricule(nickname);
-  const nom = nickname.replace(/\[\d+\]\s*/, '').trim();
+    const userId = message.author.id;
+    const nickname = message.member.nickname || message.author.username;
+    const mat = extractMatricule(nickname);
+    const nom = nickname.replace(/\[\d+\]\s*/, '').trim();
 
-  if (!mat) return message.reply("❌ Matricule introuvable dans ton pseudo.");
+    if (!mat) return message.reply("❌ Matricule introuvable dans ton pseudo.");
 
-  postToSheet({ type: "grade", userId, matricule: mat, nom, grade: "Rookie" });
-  message.reply('✅ Tu as été enregistré comme Rookie dans Google Sheets !');
-}
+    postToSheet({ type: "grade", userId, matricule: mat, nom, grade: "Rookie" });
+    message.reply('✅ Tu as été enregistré comme Rookie dans Google Sheets !');
+  }
 
   if (message.content === "!presence") {
     const userId = message.author.id;
@@ -107,10 +96,10 @@ client.on("messageCreate", async (message) => {
         body: JSON.stringify({ userId }),
       });
 
-    const text = await response.text(); // 👈 Ajout
-    console.log('Réponse Sheets:', text); // 👈 Ajout
+      const text = await response.text();
+      console.log('Réponse Sheets:', text);
 
-    if (response.ok) {
+      if (response.ok) {
         message.reply('📋 Ta présence a bien été enregistrée dans la feuille !');
       } else {
         message.reply('❌ Une erreur est survenue côté Google Sheet.');
@@ -140,7 +129,6 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
 
   if (!mat) return;
 
-  // Détection des grades
   for (const [grade, id] of Object.entries(ROLE_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
@@ -155,7 +143,6 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
     }
   }
 
-  // Détection des formations
   for (const [formation, id] of Object.entries(FORMATION_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
@@ -170,7 +157,6 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
     }
   }
 });
-
 
 client.login(process.env.BOT_TOKEN);
 
