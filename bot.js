@@ -1,78 +1,23 @@
 console.log("Bot en cours de démarrage...");
 
-process.on("unhandledRejection", (reason, promise) => {
+process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
 });
 
 import express from 'express';
+import { Client, GatewayIntentBits, Partials } from "discord.js";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
+
+dotenv.config();
+
 const app = express();
-
-// Quand quelqu’un accède à la racine du site ("/"), on répond juste "Bot is running."
-app.get('/', (req, res) => {
-  res.send('Bot is running.');
-});
-
-// Démarre le serveur sur le port défini par Railway (ou le 3000 par défaut)
+app.get('/', (req, res) => res.send('Bot is running.'));
 app.listen(process.env.PORT || 3000, () => {
   console.log('🌐 Serveur HTTP Express lancé pour le keep-alive');
 });
 
-import { Client, GatewayIntentBits, Partials } from "discord.js";
-import fetch from "node-fetch";
-import dotenv from "dotenv";
-dotenv.config();
-
-// Sync avec Sheet
-async function syncToGoogleSheet(userId) {
-  const response = await fetch('https://script.google.com/macros/s/AKfycbwicXBuuIJ9R_QC2ebiMvlCJ6yntjnm5jrQ3GLwJMbzIMHwg_qoyOTeyu5Ivl3qnw3G/exec', {
-    method: 'POST',
-    body: JSON.stringify({ userId }),
-    headers: { 'Content-Type': 'application/json' }
-  });
-
-client.on('messageCreate', async (message) => {
-  if (message.content === '!valider') {
-    await syncToGoogleSheet(message.author.id);
-    message.reply('Tu as été validé dans le Google Sheet !');
-  }
-});
-
-  if (response.ok) {
-    console.log('✅ Synchronisation réussie avec Google Sheet');
-  } else {
-    console.error('❌ Échec de la synchronisation');
-  }
-}
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-
-  if (message.content === '!presence') {
-    // Récupère l'ID Discord de l'utilisateur
-    const userId = message.author.id;
-
-    // URL de ton Apps Script déployé
-    const url = 'https://script.google.com/macros/s/AKfycbwicXBuuIJ9R_QC2ebiMvlCJ6yntjnm5jrQ3GLwJMbzIMHwg_qoyOTeyu5Ivl3qnw3G/exec';
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (response.ok) {
-        message.reply('📋 Ta présence a bien été enregistrée dans la feuille !');
-      } else {
-        message.reply('❌ Une erreur est survenue côté Google Sheet.');
-      }
-    } catch (error) {
-      console.error('Erreur fetch :', error);
-      message.reply('⚠️ Impossible de contacter Google Sheet.');
-    }
-  }
-});
-
+// --- Discord Client ---
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -83,6 +28,7 @@ const client = new Client({
   partials: [Partials.GuildMember]
 });
 
+// --- Constantes ---
 const ROLE_IDS = {
   Rookie: process.env.ROLE_ROOKIE,
   "Officier I": process.env.ROLE_OFFICIER_I,
@@ -102,13 +48,12 @@ const CHANNEL_ABS = process.env.CHANNEL_ABSENCES;
 const CHANNEL_SAN = process.env.CHANNEL_SANCTIONS;
 const SHEET_URL = process.env.SHEET_WEBAPP_URL;
 
-// Extrait matricule [xx] de pseudo
+// --- Fonctions utilitaires ---
 function extractMatricule(nick) {
   const m = nick.match(/\[(\d+)\]/);
   return m ? m[1] : null;
 }
 
-// Envoi POST au script Sheets
 async function postToSheet(payload) {
   try {
     await fetch(SHEET_URL, {
@@ -116,17 +61,73 @@ async function postToSheet(payload) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-  } catch(e) {
+  } catch (e) {
     console.error("Erreur envoi à Sheets:", e);
   }
 }
 
-// Surveille ajout de rôle
+async function syncToGoogleSheet(userId) {
+  const response = await fetch('https://script.google.com/macros/s/AKfycbwicXBuuIJ9R_QC2ebiMvlCJ6yntjnm5jrQ3GLwJMbzIMHwg_qoyOTeyu5Ivl3qnw3G/exec', {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  if (response.ok) {
+    console.log('✅ Synchronisation réussie avec Google Sheet');
+  } else {
+    console.error('❌ Échec de la synchronisation');
+  }
+}
+
+// --- Événements Discord ---
+client.on("ready", () => {
+  console.log(`Connecté en tant que ${client.user.tag}`);
+});
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content === "!valider") {
+    await syncToGoogleSheet(message.author.id);
+    message.reply('Tu as été validé dans le Google Sheet !');
+  }
+
+  if (message.content === "!presence") {
+    const userId = message.author.id;
+
+    try {
+      const response = await fetch(SHEET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (response.ok) {
+        message.reply('📋 Ta présence a bien été enregistrée dans la feuille !');
+      } else {
+        message.reply('❌ Une erreur est survenue côté Google Sheet.');
+      }
+    } catch (error) {
+      console.error('Erreur fetch :', error);
+      message.reply('⚠️ Impossible de contacter Google Sheet.');
+    }
+  }
+
+  // Absences / sanctions
+  if (message.channel.id === CHANNEL_ABS || message.channel.id === CHANNEL_SAN) {
+    const mat = extractMatricule(message.content);
+    if (!mat) return;
+    const type = message.channel.id === CHANNEL_ABS ? "absence" : "sanction";
+    const reason = message.content.replace(/\[.*?\]\s*/, "");
+    postToSheet({ type, matricule: mat, reason, timestamp: message.createdTimestamp });
+  }
+});
+
 client.on("guildMemberUpdate", async (oldM, newM) => {
   const mat = extractMatricule(newM.nickname || newM.user.username);
   if (!mat) return;
 
-  // changement de grade
   for (const [grade, id] of Object.entries(ROLE_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
@@ -135,7 +136,6 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
     }
   }
 
-  // formation
   for (const [name, id] of Object.entries(FORMATION_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
@@ -145,22 +145,7 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
   }
 });
 
-// Surveille absences & sanctions
-client.on("messageCreate", msg => {
-  if (msg.channel.id === CHANNEL_ABS || msg.channel.id === CHANNEL_SAN) {
-    const mat = extractMatricule(msg.content);
-    if (!mat) return;
-    const type = msg.channel.id === CHANNEL_ABS ? "absence" : "sanction";
-    const reason = msg.content.replace(/\[.*?\]\s*/, "");
-    postToSheet({ type, matricule: mat, reason, timestamp: msg.createdTimestamp });
-  }
-});
-
 client.login(process.env.BOT_TOKEN);
-
-client.on("ready", () => {
-  console.log(`Connecté en tant que ${client.user.tag}`);
-});
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
