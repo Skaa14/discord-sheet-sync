@@ -62,11 +62,14 @@ function extractMatricule(nick) {
 
 async function postToSheet(payload) {
   try {
-    await fetch(SHEET_URL, {
+    const res = await fetch(SHEET_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
+
+    const result = await res.text();
+    console.log("Réponse Google Sheets :", result);
   } catch (e) {
     console.error("Erreur envoi à Sheets:", e);
   }
@@ -74,27 +77,30 @@ async function postToSheet(payload) {
 
 // --- Événements Discord ---
 client.on("ready", () => {
-  console.log(`Connecté en tant que ${client.user.tag}`);
+  console.log(`✅ Connecté en tant que ${client.user.tag}`);
 });
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   if (message.content === "!valider") {
-  const userId = message.author.id;
-  const nom = message.member?.nickname || message.author.username;
-  const mat = extractMatricule(nom);
+    const userId = message.author.id;
+    const nick = message.member?.nickname || message.author.username;
+    const info = extractMatricule(nick);
+    if (!info) return message.reply("❌ Format de nom invalide");
 
-  postToSheet({
-    type: "grade",
-    userId,
-    matricule: mat,
-    grade: "Rookie",
-    nom
-  });
+    const { matricule, nom } = info;
 
-  message.reply('Tu as été validé dans le Google Sheet !');
-}
+    postToSheet({
+      type: "grade",
+      userId,
+      matricule,
+      grade: "Rookie",
+      nom
+    });
+
+    message.reply('✅ Tu as été validé dans le Google Sheet !');
+  }
 
   if (message.content === "!presence") {
     const userId = message.author.id;
@@ -120,7 +126,6 @@ client.on("messageCreate", async (message) => {
     }
   }
 
-  // Absences / sanctions
   if (message.channel.id === CHANNEL_ABS || message.channel.id === CHANNEL_SAN) {
     const nick = message.member?.nickname || message.author.username;
     const info = extractMatricule(nick);
@@ -142,31 +147,30 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
   const userId = newM.user.id;
 
   for (const [grade, id] of Object.entries(ROLE_IDS)) {
-  const had = oldM.roles.cache.has(id);
-  const has = newM.roles.cache.has(id);
-  if (!had && has) {
-    postToSheet({
-      type: "grade",
-      matricule: mat,
-      grade,
-      userId: newM.id,
-      nom: newM.nickname || newM.user.username
-    });
+    const had = oldM.roles.cache.has(id);
+    const has = newM.roles.cache.has(id);
+    if (!had && has) {
+      postToSheet({
+        type: "grade",
+        matricule,
+        grade,
+        userId,
+        nom
+      });
+    }
   }
-}
 
   for (const [formation, id] of Object.entries(FORMATION_IDS)) {
     const had = oldM.roles.cache.has(id);
     const has = newM.roles.cache.has(id);
     if (!had && has) {
       postToSheet({
-  type: "formation",
-  matricule: mat,
-  formation: name,
-  userId: newM.id,
-  nom: newM.nickname || newM.user.username
-});
-
+        type: "formation",
+        matricule,
+        formation,
+        userId,
+        nom
+      });
     }
   }
 });
