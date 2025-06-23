@@ -152,8 +152,6 @@ client.on("guildMemberUpdate", async (oldM, newM) => {
   }
 });
 
-console.log("🔐 BOT_TOKEN:", process.env.BOT_TOKEN); // Supprime ça ensuite !
-
 client.login(process.env.BOT_TOKEN);
 
 process.on("uncaughtException", (err) => {
